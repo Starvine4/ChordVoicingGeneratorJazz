@@ -349,31 +349,40 @@ MuseScore {
 
                 output += (i + 1) + ". " + chordSymbol.text + "\n"
 
-                // Position cursor at this chord's tick
-                cursor.rewindToTick(chordSymbol.tick)
-                cursor.setDuration(1, 4)
-
-                // Generate voicing: root, 3rd, 5th, 7th
+                // Calculate all pitches: root, 3rd, 5th, 7th
                 var intervals = ["1", "3", "5", "7"]
                 var pitches = []
                 var noteNames = []
                 for (var j = 0; j < intervals.length; j++) {
                     var interval = intervals[j]
                     var notePitch = getIntervalPitch(rootPitch, interval)
-                    // Transpose to good octave range (55-72 is good for jazz voicings)
+                    // Transpose to good octave range
                     while (notePitch > 72) notePitch -= 12
                     while (notePitch < 55) notePitch += 12
                     pitches.push(notePitch)
                     noteNames.push(midiToNoteName(notePitch))
                 }
 
-                // Add notes using false/true pattern
-                cursor.addNote(pitches[0], false)
-                for (var k = 1; k < pitches.length; k++) {
-                    cursor.addNote(pitches[k], true)
-                }
+                // Left hand: root (pitches[0]) and 5th (pitches[2])
+                var leftCursor = curScore.newCursor()
+                leftCursor.staffIdx = selectedStaff + 1
+                leftCursor.voice = 0
+                leftCursor.rewindToTick(chordSymbol.tick)
+                leftCursor.setDuration(1, 4)
+                leftCursor.addNote(pitches[0], false)
+                leftCursor.addNote(pitches[2], true)
 
-                output += "   Generated chord: " + noteNames.join(", ") + "\n"
+                // Right hand: 3rd (pitches[1]) and 7th (pitches[3])
+                var rightCursor = curScore.newCursor()
+                rightCursor.staffIdx = selectedStaff
+                rightCursor.voice = 0
+                rightCursor.rewindToTick(chordSymbol.tick)
+                rightCursor.setDuration(1, 4)
+                rightCursor.addNote(pitches[1], false)
+                rightCursor.addNote(pitches[3], true)
+
+                output += "   RH (guide tones): " + noteNames[1] + ", " + noteNames[3] + "\n"
+                output += "   LH (root & 5th): " + noteNames[0] + ", " + noteNames[2] + "\n"
             }
 
             curScore.endCmd()
