@@ -4,6 +4,10 @@ This Musescore 4 plugin generates a jazz piano chord voicing, based on the chord
 
 This plugin is currently in progress but the goal is to generate Drop 2, 3 note(for solo accompaniment), Left hand(for trio accompaniment) and two hand(for ensemble accompaniment) voicings.
 
+Currently generates simple voicings:
+<img width="824" height="540" alt="image" src="https://github.com/user-attachments/assets/f9ec55b9-47be-486e-9c5c-781de839c95f" />
+
+
 The following chord symbol features are supported in the current version:
 Feature | Example
 ------- | -------
