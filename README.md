@@ -29,6 +29,7 @@ b*number* ... | C7b5b9
 ### To Do:
 
 - Implement smooth voice leading(~2hrs)
+- Add caps to the ranges of the left and right hands(~1hr)
 - Add extensions to the simple voicings(~1hr)
 - Add a toggle to choose between simple, 3 note, Left hand and ensemble voicings(~20 mins)
 - Implement logic for all of the above voicing types(~12 hrs)
