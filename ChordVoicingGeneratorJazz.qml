@@ -24,7 +24,17 @@ MuseScore {
     }
 
     property var intervalToSemitone: {
-        '1': 0, '2': 2, '3': 4, '4': 5, '5': 7, '6': 9, '7': 11
+        '1': 0,
+        'b2': 1, '2': 2, '#2': 3,
+        'b3': 3, '3': 4,
+        '4': 5, '#4': 6,
+        'b5': 6, '5': 7, '#5': 8,
+        '6': 9,
+        'b7': 10, '7': 11,
+        '8': 12,
+        'b9': 13, '9': 14, '#9': 15,
+        '11': 17, '#11': 18,
+        'b13': 20, '13': 21
     }
 
     property int lowestPitch: 28
@@ -69,6 +79,24 @@ MuseScore {
                 Layout.fillWidth: true
                 onClicked: {
                     generateVoicings()
+                }
+            }
+
+            RowLayout {
+                spacing: 10
+                Layout.fillWidth: true
+
+                CheckBox {
+                    id: compingCheckbox
+                    text: "Comping Pattern"
+                    checked: false
+                }
+
+                ComboBox {
+                    id: compingStyleBox
+                    model: ["Charleston", "Simple Swing"]
+                    enabled: compingCheckbox.checked
+                    Layout.fillWidth: true
                 }
             }
 
@@ -315,6 +343,51 @@ MuseScore {
         }
     }
 
+    function addCompingPattern(staff, chordTick, pitches, style) {
+        var debugOutput = ""
+        // pitches[0] = root, pitches[1] = 3rd, pitches[2] = 5th, pitches[3] = 7th
+        if (style === "Charleston") {
+            // LEFT HAND: root & 5th
+            var lh = curScore.newCursor()
+            lh.staffIdx = staff + 1
+            lh.voice = 0
+
+            // Minum on beat 1
+            lh.rewindToTick(chordTick)
+            debugOutput += "LH1 target: " + chordTick + ", actual: " + lh.tick + "\n"
+            lh.setDuration(1, 2)
+            // lh.addNote(pitches[0], false)
+            lh.addNote(pitches[2], false)
+
+            // Minum on beat 2
+            lh.rewindToTick(chordTick + (division * 2))
+            debugOutput += "LH2 target: " + (chordTick + division * 2) + ", actual: " + lh.tick + "\n"
+            lh.setDuration(1, 2)
+            lh.addNote(pitches[0], false)
+            // lh.addNote(pitches[2], true)
+
+            // RIGHT HAND: 3rd & 7th
+            var rh = curScore.newCursor()
+            rh.staffIdx = staff
+            rh.voice = 0
+
+            // Dotted quarter on beat 1
+            rh.rewindToTick(chordTick)
+            debugOutput += "RH1 target: " + chordTick + ", actual: " + rh.tick + "\n"
+            rh.setDuration(1.5, 4)
+            rh.addNote(pitches[1], false)
+            rh.addNote(pitches[3], true)
+
+            // Eighth on "and" of beat 2
+            rh.rewindToTick(chordTick + (division * 1.5))
+            debugOutput += "RH2 target: " + (chordTick + division * 1.5) + ", actual: " + rh.tick + "\n"
+            rh.setDuration(1, 8)
+            rh.addNote(pitches[1], false)
+            rh.addNote(pitches[3], true)
+        }
+        return debugOutput
+    }
+
     function generateVoicings() {
         var output = ""
 
@@ -338,7 +411,14 @@ MuseScore {
                 return
             }
 
-            output = "Generating voicings for " + chordSymbols.length + " chord(s):\n\n"
+            var useComping = compingCheckbox.checked
+            var compingStyle = compingStyleBox.currentText
+            output = "Generating voicings for " + chordSymbols.length + " chord(s):\n"
+            if (useComping) {
+                output += "Pattern: " + compingStyle + "\n\n"
+            } else {
+                output += "\n"
+            }
 
             curScore.startCmd()
 
@@ -351,6 +431,24 @@ MuseScore {
 
                 // Calculate all pitches: root, 3rd, 5th, 7th
                 var intervals = ["1", "3", "5", "7"]
+                switch(chord.triad){
+                    case triadType.minor:
+                        intervals = ["1", "b3", "5", "b7"];
+                        break
+                    case triadType.halfDiminished:
+                        intervals = ["1", "b3", "b5", "b7"];
+                        break
+                    case triadType.augmented:
+                        intervals = ["1", "3", "#5", "8"];
+                        break
+                    case triadType.diminished:
+                        intervals = ["1", "b3", "b5", "6"];
+                        break
+                    case triadType.dominant:
+                        intervals = ["1", "3", "5", "b7"];
+                        break
+                }
+
                 var pitches = []
                 var noteNames = []
                 for (var j = 0; j < intervals.length; j++) {
@@ -363,26 +461,37 @@ MuseScore {
                     noteNames.push(midiToNoteName(notePitch))
                 }
 
-                // Left hand: root (pitches[0]) and 5th (pitches[2])
-                var leftCursor = curScore.newCursor()
-                leftCursor.staffIdx = selectedStaff + 1
-                leftCursor.voice = 0
-                leftCursor.rewindToTick(chordSymbol.tick)
-                leftCursor.setDuration(1, 4)
-                leftCursor.addNote(pitches[0], false)
-                leftCursor.addNote(pitches[2], true)
+                if (useComping) {
+                    // Add comping pattern
+                    output += "   Applying comping to chord " + (i+1) + " at tick " + chordSymbol.tick + "\n"
+                    var debugInfo = addCompingPattern(selectedStaff, chordSymbol.tick, pitches, compingStyle)
+                    output += debugInfo
+                    output += "   RH (guide tones): " + noteNames[1] + ", " + noteNames[3] + "\n"
+                    output += "   LH (root & 5th): " + noteNames[0] + ", " + noteNames[2] + "\n"
+                    output += "   Comping rhythm applied\n"
+                } else {
+                    // Standard voicing: all notes at once
+                    // Left hand: root and 5th
+                    var leftCursor = curScore.newCursor()
+                    leftCursor.staffIdx = selectedStaff + 1
+                    leftCursor.voice = 0
+                    leftCursor.rewindToTick(chordSymbol.tick)
+                    leftCursor.setDuration(1, 4)
+                    leftCursor.addNote(pitches[0], false)
+                    leftCursor.addNote(pitches[2], true)
 
-                // Right hand: 3rd (pitches[1]) and 7th (pitches[3])
-                var rightCursor = curScore.newCursor()
-                rightCursor.staffIdx = selectedStaff
-                rightCursor.voice = 0
-                rightCursor.rewindToTick(chordSymbol.tick)
-                rightCursor.setDuration(1, 4)
-                rightCursor.addNote(pitches[1], false)
-                rightCursor.addNote(pitches[3], true)
+                    // Right hand: 3rd and 7th
+                    var rightCursor = curScore.newCursor()
+                    rightCursor.staffIdx = selectedStaff
+                    rightCursor.voice = 0
+                    rightCursor.rewindToTick(chordSymbol.tick)
+                    rightCursor.setDuration(1, 4)
+                    rightCursor.addNote(pitches[1], false)
+                    rightCursor.addNote(pitches[3], true)
 
-                output += "   RH (guide tones): " + noteNames[1] + ", " + noteNames[3] + "\n"
-                output += "   LH (root & 5th): " + noteNames[0] + ", " + noteNames[2] + "\n"
+                    output += "   RH (guide tones): " + noteNames[1] + ", " + noteNames[3] + "\n"
+                    output += "   LH (root & 5th): " + noteNames[0] + ", " + noteNames[2] + "\n"
+                }
             }
 
             curScore.endCmd()
