@@ -26,4 +26,13 @@ b*number* ... | C7b5b9
 #*number* ... | Eb7#9#11
 / *letter*[b #] | D7/A
 
+### To Do:
+
+- Implement smooth voice leading(~2hrs)
+- Add extensions to the simple voicings(~1hr)
+- Add a toggle to choose between simple, 3 note, Left hand and ensemble voicings(~20 mins)
+- Implement logic for all of the above voicing types(~12 hrs)
+- Add more rhythmic patterns(~4hrs)
+- Alternate between rhythmic patterns(~2hrs)
+
 The Chord recognition logic is credited to the Walking Bass plugin by philxan
