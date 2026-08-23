@@ -8,16 +8,19 @@ MuseScore {
     description: "Jazz Chord Voicing Generator 0.2"
     menuPath: "Plugins.ChordVoicingGeneratorJazz"
     pluginType: "dialog"
+    title: "Jazz Chord Voicing Generator"
+    thumbnailName: "ChordGeneratorIcon.png"
+    categoryCode: "StarVine4"
     width: 400
     height: 500
 
-    Component.onCompleted: {
-        if (mscoreMajorVersion >= 4) {
-            title = "Jazz Chord Voicing Generator"
-            thumbnailName = "WalkingBassIcon.png"
-            categoryCode = "PitDad Tools"
-        }
-    }
+    // Component.onCompleted: {
+    //     if (mscoreMajorVersion >= 4) {
+    //         title = "Jazz Chord Voicing Generator"
+    //         thumbnailName = "WalkingBassIcon.png"
+    //         categoryCode = "PitDad Tools"
+    //     }
+    // }
 
     property var letterToSemitone: {
         'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
